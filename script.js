@@ -8,9 +8,9 @@ const particles = [];
 
 const particleCount = 60;
 
-for (let i = 0; i < particleCount; i++) {const packets = [];
+for (let i = 0; i < 5; i++) {const packets = [];
 
-function createPacket() {
+createPacket() {
 
     const start =
         particles[Math.floor(Math.random() * particles.length)];
@@ -87,7 +87,43 @@ function animate() {
             }
         }
     }
+packets.forEach(packet => {
 
+    packet.progress += packet.speed;
+
+    if (packet.progress >= 1) {
+
+        packet.start =
+            particles[Math.floor(Math.random() * particles.length)];
+
+        packet.end =
+            particles[Math.floor(Math.random() * particles.length)];
+
+        packet.progress = 0;
+    }
+
+    const x =
+        packet.start.x +
+        (packet.end.x - packet.start.x) * packet.progress;
+
+    const y =
+        packet.start.y +
+        (packet.end.y - packet.start.y) * packet.progress;
+
+    const glow =
+        3 + Math.sin(packet.progress * Math.PI) * 5;
+
+    ctx.beginPath();
+    ctx.arc(x, y, glow, 0, Math.PI * 2);
+
+    ctx.fillStyle = "#00c8ff";
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "#00c8ff";
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+});
     requestAnimationFrame(animate);
 }
 
