@@ -5,22 +5,27 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 const particles = [];
+const packets = [];
 
 const particleCount = 60;
 
-for (let i = 0; i < 5; i++) {const packets = [];
+// PARTICLES
+for (let i = 0; i < particleCount; i++) {
+    particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4
+    });
+}
 
-createPacket() {
-
-    const start =
-        particles[Math.floor(Math.random() * particles.length)];
-
-    let end =
-        particles[Math.floor(Math.random() * particles.length)];
+// PACKET CREATION
+function createPacket() {
+    const start = particles[Math.floor(Math.random() * particles.length)];
+    let end = particles[Math.floor(Math.random() * particles.length)];
 
     while (end === start) {
-        end =
-            particles[Math.floor(Math.random() * particles.length)];
+        end = particles[Math.floor(Math.random() * particles.length)];
     }
 
     packets.push({
@@ -30,20 +35,16 @@ createPacket() {
         speed: 0.003 + Math.random() * 0.004
     });
 }
-    particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4
-    });
-}
 
+// créer quelques packets initiaux
+for (let i = 0; i < 10; i++) createPacket();
+
+// ANIMATION
 function animate() {
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // particles
     particles.forEach(p => {
-
         p.x += p.vx;
         p.y += p.vy;
 
@@ -52,86 +53,58 @@ function animate() {
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
-
         ctx.fillStyle = "rgba(0,200,255,0.8)";
         ctx.fill();
     });
 
+    // lines
     for (let i = 0; i < particles.length; i++) {
-
         for (let j = i + 1; j < particles.length; j++) {
-
             const dx = particles[i].x - particles[j].x;
             const dy = particles[i].y - particles[j].y;
-
             const distance = Math.sqrt(dx * dx + dy * dy);
 
             if (distance < 120) {
-
                 ctx.beginPath();
-
-                ctx.moveTo(
-                    particles[i].x,
-                    particles[i].y
-                );
-
-                ctx.lineTo(
-                    particles[j].x,
-                    particles[j].y
-                );
-
-                ctx.strokeStyle =
-                    `rgba(0,200,255,${1 - distance / 120})`;
-
+                ctx.moveTo(particles[i].x, particles[i].y);
+                ctx.lineTo(particles[j].x, particles[j].y);
+                ctx.strokeStyle = `rgba(0,200,255,${1 - distance / 120})`;
                 ctx.stroke();
             }
         }
     }
-packets.forEach(packet => {
 
-    packet.progress += packet.speed;
+    // packets
+    packets.forEach(packet => {
+        packet.progress += packet.speed;
 
-    if (packet.progress >= 1) {
+        if (packet.progress >= 1) {
+            packet.start = particles[Math.floor(Math.random() * particles.length)];
+            packet.end = particles[Math.floor(Math.random() * particles.length)];
+            packet.progress = 0;
+        }
 
-        packet.start =
-            particles[Math.floor(Math.random() * particles.length)];
+        const x = packet.start.x + (packet.end.x - packet.start.x) * packet.progress;
+        const y = packet.start.y + (packet.end.y - packet.start.y) * packet.progress;
 
-        packet.end =
-            particles[Math.floor(Math.random() * particles.length)];
+        const glow = 3 + Math.sin(packet.progress * Math.PI) * 5;
 
-        packet.progress = 0;
-    }
+        ctx.beginPath();
+        ctx.arc(x, y, glow, 0, Math.PI * 2);
+        ctx.fillStyle = "#00c8ff";
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = "#00c8ff";
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    });
 
-    const x =
-        packet.start.x +
-        (packet.end.x - packet.start.x) * packet.progress;
-
-    const y =
-        packet.start.y +
-        (packet.end.y - packet.start.y) * packet.progress;
-
-    const glow =
-        3 + Math.sin(packet.progress * Math.PI) * 5;
-
-    ctx.beginPath();
-    ctx.arc(x, y, glow, 0, Math.PI * 2);
-
-    ctx.fillStyle = "#00c8ff";
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = "#00c8ff";
-
-    ctx.fill();
-
-    ctx.shadowBlur = 0;
-});
     requestAnimationFrame(animate);
 }
 
 animate();
 
+// resize
 window.addEventListener("resize", () => {
-
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
 });
