@@ -8,7 +8,28 @@ const particles = [];
 
 const particleCount = 60;
 
-for (let i = 0; i < particleCount; i++) {
+for (let i = 0; i < particleCount; i++) {const packets = [];
+
+function createPacket() {
+
+    const start =
+        particles[Math.floor(Math.random() * particles.length)];
+
+    let end =
+        particles[Math.floor(Math.random() * particles.length)];
+
+    while (end === start) {
+        end =
+            particles[Math.floor(Math.random() * particles.length)];
+    }
+
+    packets.push({
+        start,
+        end,
+        progress: 0,
+        speed: 0.003 + Math.random() * 0.004
+    });
+}
     particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
