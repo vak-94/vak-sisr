@@ -32,12 +32,12 @@ function createPacket() {
         start,
         end,
         progress: 0,
-        speed: 0.003 + Math.random() * 0.004
+        speed: 0.006 + Math.random() * 0.008
     });
 }
 
 // créer quelques packets initiaux
-for (let i = 0; i < 10; i++) createPacket();
+for (let i = 0; i < 5; i++) createPacket();
 
 // ANIMATION
 function animate() {
