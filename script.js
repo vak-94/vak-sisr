@@ -15,7 +15,7 @@ const particles = [];
 const packets = [];
 
 const particleCount = 75;
-const packetCount = 12;
+const packetCount = 14;
 const maxDistance = 150;
 
 for (let i = 0; i < particleCount; i++) {
@@ -24,7 +24,7 @@ for (let i = 0; i < particleCount; i++) {
         y: Math.random() * h,
         vx: (Math.random() - 0.5) * 0.45,
         vy: (Math.random() - 0.5) * 0.45,
-        size: 1.5 + Math.random() * 2,
+        size: 1.4 + Math.random() * 2,
         pulse: Math.random() * Math.PI * 2
     });
 }
@@ -46,7 +46,8 @@ function createPacket() {
         end,
         progress: Math.random(),
         speed: 0.004 + Math.random() * 0.008,
-        size: 2 + Math.random() * 3
+        size: 2 + Math.random() * 3,
+        waveLength: 0.12 + Math.random() * 0.12
     });
 }
 
@@ -64,16 +65,15 @@ function drawBackground() {
         Math.max(w, h)
     );
 
-    gradient.addColorStop(0, "rgba(0, 60, 90, 0.18)");
+    gradient.addColorStop(0, "rgba(0, 60, 90, 0.20)");
+    gradient.addColorStop(0.45, "rgba(0, 20, 35, 0.65)");
     gradient.addColorStop(1, "rgba(0, 0, 0, 0.95)");
 
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, w, h);
 }
 
-function animate(time) {
-    drawBackground();
-
+function drawParticles() {
     particles.forEach(p => {
         p.x += p.vx;
         p.y += p.vy;
@@ -88,12 +88,14 @@ function animate(time) {
         ctx.beginPath();
         ctx.arc(p.x, p.y, glowSize, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(0, 220, 255, 0.9)";
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 14;
         ctx.shadowColor = "#00dfff";
         ctx.fill();
         ctx.shadowBlur = 0;
     });
+}
 
+function drawLinks(time) {
     for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
             const dx = particles[i].x - particles[j].x;
@@ -107,13 +109,16 @@ function animate(time) {
                 ctx.beginPath();
                 ctx.moveTo(particles[i].x, particles[i].y);
                 ctx.lineTo(particles[j].x, particles[j].y);
+
                 ctx.strokeStyle = `rgba(0, 200, 255, ${opacity * pulse})`;
                 ctx.lineWidth = 1;
                 ctx.stroke();
             }
         }
     }
+}
 
+function drawPackets() {
     packets.forEach(packet => {
         packet.progress += packet.speed;
 
@@ -127,21 +132,58 @@ function animate(time) {
 
             packet.progress = 0;
             packet.speed = 0.004 + Math.random() * 0.008;
+            packet.waveLength = 0.12 + Math.random() * 0.12;
         }
 
-        const x = packet.start.x + (packet.end.x - packet.start.x) * packet.progress;
-        const y = packet.start.y + (packet.end.y - packet.start.y) * packet.progress;
+        const sx = packet.start.x;
+        const sy = packet.start.y;
+        const ex = packet.end.x;
+        const ey = packet.end.y;
 
-        const glow = packet.size + Math.sin(packet.progress * Math.PI) * 6;
+        const waveStart = Math.max(0, packet.progress - packet.waveLength);
+        const waveEnd = Math.min(1, packet.progress);
+
+        const x1 = sx + (ex - sx) * waveStart;
+        const y1 = sy + (ey - sy) * waveStart;
+        const x2 = sx + (ex - sx) * waveEnd;
+        const y2 = sy + (ey - sy) * waveEnd;
+
+        const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+        gradient.addColorStop(0, "rgba(0, 240, 255, 0)");
+        gradient.addColorStop(0.45, "rgba(0, 240, 255, 0.45)");
+        gradient.addColorStop(1, "rgba(255, 255, 255, 1)");
 
         ctx.beginPath();
-        ctx.arc(x, y, glow, 0, Math.PI * 2);
-        ctx.fillStyle = "#00f0ff";
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 3;
         ctx.shadowBlur = 25;
         ctx.shadowColor = "#00f0ff";
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+
+        const headX = sx + (ex - sx) * packet.progress;
+        const headY = sy + (ey - sy) * packet.progress;
+
+        ctx.beginPath();
+        ctx.arc(headX, headY, packet.size, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = "#00f0ff";
         ctx.fill();
+
         ctx.shadowBlur = 0;
     });
+}
+
+function animate(time) {
+    drawBackground();
+    drawLinks(time);
+    drawPackets();
+    drawParticles();
 
     requestAnimationFrame(animate);
 }
