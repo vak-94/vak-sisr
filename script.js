@@ -15,7 +15,7 @@ const particles = [];
 const flows = [];
 
 const particleCount = 75;
-const flowCount = 3;
+const flowCount = 5;
 const maxDistance = 145;
 const pathLength = 6;
 
