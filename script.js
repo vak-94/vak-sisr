@@ -28,6 +28,7 @@ for (let i = 0; i < particleCount; i++) {
         vy: (Math.random() - 0.5) * 0.42,
         size: 1.5 + Math.random() * 2,
         pulse: Math.random() * Math.PI * 2
+        hit: 0
     });
 }
 
@@ -135,16 +136,20 @@ function drawLinks(time) {
 
 function drawParticles() {
     particles.forEach(p => {
-        const glowSize = p.size + Math.sin(p.pulse) * 0.5;
+        if (p.hit > 0) p.hit -= 0.04;
+
+        const reaction = Math.max(0, p.hit);
+        const glowSize = p.size + Math.sin(p.pulse) * 0.5 + reaction * 6;
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, glowSize, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(0, 220, 255, 0.85)";
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = "#00dfff";
+        ctx.fillStyle = `rgba(0, 220, 255, ${0.85 + reaction * 0.15})`;
+        ctx.shadowBlur = 12 + reaction * 35;
+        ctx.shadowColor = "#00f0ff";
         ctx.fill();
         ctx.shadowBlur = 0;
     });
+}
 }
 
 function resetFlow(flow) {
@@ -202,6 +207,9 @@ function drawFlows() {
 
         const a = flow.path[flow.segment];
         const b = flow.path[flow.segment + 1];
+        if (flow.progress > 0.95) {
+    b.hit = 1;
+}
 
         const startProgress = Math.max(0, flow.progress - flow.tail);
         const head = drawFlowSegment(a, b, startProgress, flow.progress);
