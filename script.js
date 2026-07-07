@@ -19,7 +19,6 @@ const flowCount = 5;
 const maxDistance = 145;
 const pathLength = 6;
 
-// PARTICLES
 for (let i = 0; i < particleCount; i++) {
     particles.push({
         x: Math.random() * w,
@@ -27,7 +26,7 @@ for (let i = 0; i < particleCount; i++) {
         vx: (Math.random() - 0.5) * 0.42,
         vy: (Math.random() - 0.5) * 0.42,
         size: 1.5 + Math.random() * 2,
-        pulse: Math.random() * Math.PI * 2
+        pulse: Math.random() * Math.PI * 2,
         hit: 0
     });
 }
@@ -63,7 +62,11 @@ function buildPath() {
         path.push(current);
     }
 
-    return path.length > 1 ? path : buildPath();
+    if (path.length <= 1) {
+        return buildPath();
+    }
+
+    return path;
 }
 
 function createFlow() {
@@ -136,7 +139,9 @@ function drawLinks(time) {
 
 function drawParticles() {
     particles.forEach(p => {
-        if (p.hit > 0) p.hit -= 0.04;
+        if (p.hit > 0) {
+            p.hit -= 0.04;
+        }
 
         const reaction = Math.max(0, p.hit);
         const glowSize = p.size + Math.sin(p.pulse) * 0.5 + reaction * 6;
@@ -150,7 +155,6 @@ function drawParticles() {
         ctx.shadowBlur = 0;
     });
 }
-}
 
 function resetFlow(flow) {
     flow.path = buildPath();
@@ -161,16 +165,16 @@ function resetFlow(flow) {
     flow.tail = 0.24 + Math.random() * 0.08;
 }
 
-function drawFlowSegment(a, b, startProgress, endProgress, intensity = 1) {
+function drawFlowSegment(a, b, startProgress, endProgress) {
     const x1 = a.x + (b.x - a.x) * startProgress;
     const y1 = a.y + (b.y - a.y) * startProgress;
     const x2 = a.x + (b.x - a.x) * endProgress;
     const y2 = a.y + (b.y - a.y) * endProgress;
 
     const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-    gradient.addColorStop(0, `rgba(0, 240, 255, 0)`);
-    gradient.addColorStop(0.45, `rgba(0, 240, 255, ${0.45 * intensity})`);
-    gradient.addColorStop(1, `rgba(255, 255, 255, ${0.95 * intensity})`);
+    gradient.addColorStop(0, "rgba(0, 240, 255, 0)");
+    gradient.addColorStop(0.45, "rgba(0, 240, 255, 0.45)");
+    gradient.addColorStop(1, "rgba(255, 255, 255, 0.95)");
 
     ctx.beginPath();
     ctx.moveTo(x1, y1);
@@ -196,6 +200,12 @@ function drawFlows() {
         flow.progress += flow.speed;
 
         if (flow.progress >= 1) {
+            const targetNode = flow.path[flow.segment + 1];
+
+            if (targetNode) {
+                targetNode.hit = 1;
+            }
+
             flow.segment++;
             flow.progress = 0;
 
@@ -207,23 +217,15 @@ function drawFlows() {
 
         const a = flow.path[flow.segment];
         const b = flow.path[flow.segment + 1];
-        if (flow.progress > 0.95) {
-    b.hit = 1;
-}
+
+        if (!a || !b) {
+            resetFlow(flow);
+            return;
+        }
 
         const startProgress = Math.max(0, flow.progress - flow.tail);
         const head = drawFlowSegment(a, b, startProgress, flow.progress);
 
-        // petit glow sur le nœud actif
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, 5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(0, 240, 255, 0.25)";
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = "#00f0ff";
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        // tête de l'onde
         ctx.beginPath();
         ctx.arc(head.x, head.y, 3.8, 0, Math.PI * 2);
         ctx.fillStyle = "#ffffff";
