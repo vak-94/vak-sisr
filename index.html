@@ -20,7 +20,25 @@
 </head>
 
 <body>
+<!-- ÉCRAN DE DÉMARRAGE -->
+<div id="boot-screen" class="boot-screen" aria-hidden="true">
+    <div class="boot-content">
+        <span class="boot-label">SYSTEM INITIALIZATION</span>
 
+        <h2>PORTFOLIO SISR</h2>
+
+        <div class="boot-status">
+            <span id="boot-message">Connexion au réseau...</span>
+            <span id="boot-percent">0%</span>
+        </div>
+
+        <div class="boot-progress">
+            <div id="boot-progress-bar" class="boot-progress-bar"></div>
+        </div>
+
+        <p class="boot-ready">NETWORK INTERFACE READY</p>
+    </div>
+</div>
     <!-- Animation réseau -->
     <canvas id="network" aria-hidden="true"></canvas>
 

@@ -52,7 +52,114 @@ a {
     --radius-large: 22px;
     --radius-medium: 16px;
 }
+/* ========================================
+   ÉCRAN DE DÉMARRAGE
+======================================== */
 
+.boot-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 25px;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(0, 55, 80, 0.28),
+            #02060c 68%
+        );
+
+    opacity: 1;
+    visibility: visible;
+
+    transition:
+        opacity 0.55s ease,
+        visibility 0.55s ease;
+}
+
+.boot-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.boot-content {
+    width: min(520px, 100%);
+}
+
+.boot-label {
+    display: block;
+    margin-bottom: 12px;
+
+    color: var(--cyan);
+    font-size: 0.68rem;
+    letter-spacing: 4px;
+}
+
+.boot-content h2 {
+    margin-bottom: 35px;
+
+    color: #ffffff;
+    font-size: clamp(1.7rem, 5vw, 2.6rem);
+    letter-spacing: 2px;
+}
+
+.boot-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    margin-bottom: 12px;
+
+    color: #a8c8d5;
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+}
+
+#boot-percent {
+    color: var(--cyan-light);
+}
+
+.boot-progress {
+    width: 100%;
+    height: 4px;
+
+    overflow: hidden;
+
+    background: rgba(0, 200, 255, 0.1);
+    border-radius: 999px;
+}
+
+.boot-progress-bar {
+    width: 0;
+    height: 100%;
+
+    background: linear-gradient(
+        90deg,
+        var(--cyan),
+        #ffffff
+    );
+
+    border-radius: inherit;
+
+    box-shadow:
+        0 0 12px var(--cyan-light),
+        0 0 25px rgba(0, 240, 255, 0.4);
+}
+
+.boot-ready {
+    margin-top: 18px;
+
+    color: rgba(168, 200, 213, 0.5);
+    font-size: 0.64rem;
+    letter-spacing: 3px;
+}
 /* ========================================
    CANVAS
 ======================================== */

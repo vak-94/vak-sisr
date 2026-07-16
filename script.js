@@ -591,3 +591,77 @@ const sectionObserver =
 sections.forEach(section => {
     sectionObserver.observe(section);
 });
+/* ========================================
+   ÉCRAN DE DÉMARRAGE
+======================================== */
+
+const bootScreen = document.getElementById("boot-screen");
+const bootProgressBar = document.getElementById("boot-progress-bar");
+const bootPercent = document.getElementById("boot-percent");
+const bootMessage = document.getElementById("boot-message");
+
+const bootMessages = [
+    {
+        progress: 0,
+        message: "Connexion au réseau..."
+    },
+    {
+        progress: 30,
+        message: "Chargement du profil..."
+    },
+    {
+        progress: 60,
+        message: "Initialisation des modules..."
+    },
+    {
+        progress: 85,
+        message: "Vérification du système..."
+    },
+    {
+        progress: 100,
+        message: "Système prêt."
+    }
+];
+
+function startBootScreen() {
+    if (
+        !bootScreen ||
+        !bootProgressBar ||
+        !bootPercent ||
+        !bootMessage
+    ) {
+        return;
+    }
+
+    let progress = 0;
+    let currentMessageIndex = 0;
+
+    const interval = window.setInterval(() => {
+        progress += 2 + Math.random() * 5;
+        progress = Math.min(progress, 100);
+
+        bootProgressBar.style.width = `${progress}%`;
+        bootPercent.textContent = `${Math.floor(progress)}%`;
+
+        const nextMessage = bootMessages[currentMessageIndex + 1];
+
+        if (
+            nextMessage &&
+            progress >= nextMessage.progress
+        ) {
+            currentMessageIndex++;
+            bootMessage.textContent =
+                bootMessages[currentMessageIndex].message;
+        }
+
+        if (progress >= 100) {
+            window.clearInterval(interval);
+
+            window.setTimeout(() => {
+                bootScreen.classList.add("hidden");
+            }, 250);
+        }
+    }, 35);
+}
+
+window.addEventListener("load", startBootScreen);
