@@ -1,875 +1,593 @@
-/* ========================================
-   RÉINITIALISATION
-======================================== */
+const canvas = document.getElementById("network");
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+if (!canvas) {
+    throw new Error(
+        'Le canvas avec l’identifiant "network" est introuvable.'
+    );
 }
 
-html {
-    scroll-behavior: smooth;
-    scroll-padding-top: 110px;
+const ctx = canvas.getContext("2d");
+
+if (!ctx) {
+    throw new Error(
+        "Le contexte 2D du canvas n’est pas disponible."
+    );
 }
 
-body {
-    min-height: 100vh;
-    background: #050a14;
-    color: #ffffff;
-    font-family: Arial, Helvetica, sans-serif;
-    overflow-x: hidden;
-}
+let w = 0;
+let h = 0;
 
-a {
-    color: inherit;
-}
+const particles = [];
+const flows = [];
 
-button,
-a {
-    -webkit-tap-highlight-color: transparent;
-}
+const particleCount = window.innerWidth < 700 ? 45 : 75;
+const flowCount = window.innerWidth < 700 ? 3 : 5;
+
+const maxDistance = 145;
+const pathLength = 6;
 
 /* ========================================
-   VARIABLES
+   REDIMENSIONNEMENT
 ======================================== */
 
-:root {
-    --background: #050a14;
-    --panel: rgba(10, 20, 35, 0.72);
-    --panel-light: rgba(255, 255, 255, 0.035);
-
-    --cyan: #00c8ff;
-    --cyan-light: #00f0ff;
-
-    --text: #ffffff;
-    --text-soft: #d8edf5;
-    --text-muted: #9bb7c4;
-
-    --border: rgba(0, 200, 255, 0.22);
-    --border-hover: rgba(0, 200, 255, 0.45);
-
-    --radius-large: 22px;
-    --radius-medium: 16px;
+function resizeCanvas() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
 }
+
+resizeCanvas();
+
+window.addEventListener("resize", resizeCanvas);
 
 /* ========================================
-   CANVAS
+   PARTICULES
 ======================================== */
 
-#network {
-    position: fixed;
-    inset: 0;
+for (let i = 0; i < particleCount; i++) {
+    particles.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
 
-    width: 100%;
-    height: 100%;
+        vx: (Math.random() - 0.5) * 0.42,
+        vy: (Math.random() - 0.5) * 0.42,
 
-    z-index: -1;
-    pointer-events: none;
+        size: 1.5 + Math.random() * 2,
+        pulse: Math.random() * Math.PI * 2,
+
+        hit: 0
+    });
 }
 
-/* ========================================
-   NAVIGATION
-======================================== */
-
-.navbar {
-    position: fixed;
-    top: 24px;
-    left: 50%;
-
-    width: min(1180px, 92%);
-    min-height: 64px;
-    padding: 0 24px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-
-    transform: translateX(-50%);
-
-    background: rgba(8, 17, 31, 0.78);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-
-    box-shadow: 0 12px 45px rgba(0, 0, 0, 0.25);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-
-    z-index: 1000;
+function randomParticle() {
+    return particles[
+        Math.floor(Math.random() * particles.length)
+    ];
 }
 
-.logo {
-    flex-shrink: 0;
+function getDistance(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
 
-    color: var(--cyan);
-    font-weight: 700;
-    letter-spacing: 3px;
-    text-decoration: none;
+    return Math.sqrt(dx * dx + dy * dy);
 }
 
-.nav-links {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
-}
+function getNeighbors(particle) {
+    return particles.filter(otherParticle => {
+        if (otherParticle === particle) {
+            return false;
+        }
 
-.nav-links a {
-    position: relative;
-
-    padding: 22px 0;
-
-    color: var(--text-soft);
-    font-size: 0.88rem;
-    text-decoration: none;
-
-    transition:
-        color 0.25s ease,
-        text-shadow 0.25s ease;
-}
-
-.nav-links a::after {
-    content: "";
-
-    position: absolute;
-    right: 0;
-    bottom: 14px;
-    left: 0;
-
-    height: 1px;
-
-    background: var(--cyan-light);
-    box-shadow: 0 0 12px var(--cyan-light);
-
-    transform: scaleX(0);
-    transform-origin: center;
-
-    transition: transform 0.25s ease;
-}
-
-.nav-links a:hover,
-.nav-links a.active {
-    color: var(--cyan-light);
-    text-shadow: 0 0 12px rgba(0, 229, 255, 0.55);
-}
-
-.nav-links a:hover::after,
-.nav-links a.active::after {
-    transform: scaleX(1);
-}
-
-.session {
-    flex-shrink: 0;
-
-    color: var(--cyan);
-    font-size: 0.72rem;
-    letter-spacing: 2px;
+        return getDistance(particle, otherParticle) < maxDistance;
+    });
 }
 
 /* ========================================
-   ACCUEIL
+   CHEMINS DES FLUX
 ======================================== */
 
-.hero {
-    position: relative;
-    z-index: 1;
+function buildPath() {
+    const maximumAttempts = 40;
 
-    min-height: 100vh;
-    padding: 140px 20px 70px;
+    for (let attempt = 0; attempt < maximumAttempts; attempt++) {
+        const path = [];
+        let current = randomParticle();
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+        path.push(current);
 
-    text-align: center;
+        for (let i = 0; i < pathLength; i++) {
+            const availableNeighbors = getNeighbors(current).filter(
+                neighbor => !path.includes(neighbor)
+            );
+
+            if (availableNeighbors.length === 0) {
+                break;
+            }
+
+            current =
+                availableNeighbors[
+                    Math.floor(
+                        Math.random() * availableNeighbors.length
+                    )
+                ];
+
+            path.push(current);
+        }
+
+        if (path.length > 1) {
+            return path;
+        }
+    }
+
+    /*
+     * Sécurité : si aucun chemin connecté n’est trouvé,
+     * on utilise deux particules différentes.
+     */
+
+    const start = randomParticle();
+    let end = randomParticle();
+
+    while (end === start) {
+        end = randomParticle();
+    }
+
+    return [start, end];
 }
 
-.hero-label {
-    margin-bottom: 20px;
+function createFlow() {
+    return {
+        path: buildPath(),
+        segment: 0,
+        progress: Math.random(),
 
-    color: var(--cyan);
-    font-size: 0.72rem;
-    letter-spacing: 4px;
+        speed: 0.012 + Math.random() * 0.006,
+        delay: Math.random() * 100,
+        tail: 0.24 + Math.random() * 0.08
+    };
 }
 
-.hero h1 {
-    margin-bottom: 12px;
-
-    font-size: clamp(3rem, 8vw, 5.4rem);
-    line-height: 1;
-    letter-spacing: -3px;
-
-    text-shadow: 0 0 35px rgba(0, 200, 255, 0.15);
+for (let i = 0; i < flowCount; i++) {
+    flows.push(createFlow());
 }
 
-.hero h2 {
-    margin-bottom: 16px;
+/* ========================================
+   FOND
+======================================== */
 
-    color: var(--cyan-light);
-    font-size: clamp(1.25rem, 3vw, 1.8rem);
-    font-weight: 400;
-}
-
-.hero p {
-    max-width: 620px;
-
-    color: var(--text-muted);
-    font-size: 1.05rem;
-    line-height: 1.7;
-}
-
-.main-button {
-    margin-top: 34px;
-    padding: 13px 24px;
-
-    color: var(--cyan-light);
-    font-size: 0.85rem;
-    letter-spacing: 1px;
-    text-decoration: none;
-
-    background: rgba(0, 200, 255, 0.06);
-    border: 1px solid rgba(0, 200, 255, 0.4);
-    border-radius: 999px;
-
-    box-shadow: 0 0 25px rgba(0, 200, 255, 0.08);
-
-    transition:
-        color 0.25s ease,
-        background 0.25s ease,
-        transform 0.25s ease,
-        box-shadow 0.25s ease;
-}
-
-.main-button:hover {
-    color: #021017;
-    background: var(--cyan-light);
-
-    box-shadow: 0 0 30px rgba(0, 240, 255, 0.35);
-
-    transform: translateY(-3px);
-}
-
-.scroll-indicator {
-    position: absolute;
-    bottom: 30px;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-
-    color: var(--text-muted);
-    font-size: 0.62rem;
-    letter-spacing: 3px;
-}
-
-.scroll-line {
-    width: 1px;
-    height: 45px;
-
-    background: linear-gradient(
-        to bottom,
-        var(--cyan),
-        transparent
+function drawBackground() {
+    const gradient = ctx.createRadialGradient(
+        w / 2,
+        h / 2,
+        0,
+        w / 2,
+        h / 2,
+        Math.max(w, h)
     );
 
-    animation: scrollPulse 1.8s infinite ease-in-out;
+    gradient.addColorStop(
+        0,
+        "rgba(0, 60, 90, 0.20)"
+    );
+
+    gradient.addColorStop(
+        0.45,
+        "rgba(0, 20, 35, 0.65)"
+    );
+
+    gradient.addColorStop(
+        1,
+        "rgba(0, 0, 0, 0.95)"
+    );
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, w, h);
 }
 
-@keyframes scrollPulse {
-    0%,
-    100% {
-        opacity: 0.3;
-        transform: scaleY(0.65);
-        transform-origin: top;
+/* ========================================
+   MOUVEMENT DES PARTICULES
+======================================== */
+
+function updateParticles() {
+    particles.forEach(particle => {
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+
+        if (particle.x <= 0) {
+            particle.x = 0;
+            particle.vx = Math.abs(particle.vx);
+        }
+
+        if (particle.x >= w) {
+            particle.x = w;
+            particle.vx = -Math.abs(particle.vx);
+        }
+
+        if (particle.y <= 0) {
+            particle.y = 0;
+            particle.vy = Math.abs(particle.vy);
+        }
+
+        if (particle.y >= h) {
+            particle.y = h;
+            particle.vy = -Math.abs(particle.vy);
+        }
+
+        particle.pulse += 0.025;
+    });
+}
+
+/* ========================================
+   LIENS
+======================================== */
+
+function drawLinks(time) {
+    for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+            const firstParticle = particles[i];
+            const secondParticle = particles[j];
+
+            const distance = getDistance(
+                firstParticle,
+                secondParticle
+            );
+
+            if (distance >= maxDistance) {
+                continue;
+            }
+
+            const opacity =
+                1 - distance / maxDistance;
+
+            const pulse =
+                0.22 +
+                Math.sin(
+                    time * 0.002 +
+                    distance * 0.04
+                ) * 0.12;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                firstParticle.x,
+                firstParticle.y
+            );
+
+            ctx.lineTo(
+                secondParticle.x,
+                secondParticle.y
+            );
+
+            ctx.strokeStyle =
+                `rgba(0, 200, 255, ${opacity * pulse})`;
+
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
     }
-
-    50% {
-        opacity: 1;
-        transform: scaleY(1);
-        transform-origin: top;
-    }
 }
 
 /* ========================================
-   SECTIONS
+   DESSIN DES PARTICULES
 ======================================== */
 
-.page-section {
-    position: relative;
-    z-index: 1;
+function drawParticles() {
+    particles.forEach(particle => {
+        if (particle.hit > 0) {
+            particle.hit = Math.max(
+                0,
+                particle.hit - 0.04
+            );
+        }
 
-    min-height: 100vh;
-    padding: 135px max(6%, 24px) 90px;
-}
+        const reaction = particle.hit;
 
-.section-header {
-    width: min(1180px, 100%);
-    margin: 0 auto 40px;
+        const glowSize =
+            particle.size +
+            Math.sin(particle.pulse) * 0.5 +
+            reaction * 6;
 
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 25px;
-}
+        ctx.beginPath();
 
-.module-label {
-    color: var(--cyan);
-    font-size: 0.72rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-}
-
-.section-header h2 {
-    margin-top: 8px;
-
-    font-size: clamp(2.3rem, 5vw, 3.5rem);
-    line-height: 1;
-}
-
-.session-indicator {
-    flex-shrink: 0;
-
-    padding: 10px 18px;
-
-    color: var(--cyan);
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-
-    background: rgba(0, 200, 255, 0.07);
-    border: 1px solid rgba(0, 200, 255, 0.32);
-    border-radius: 999px;
-}
-
-/* ========================================
-   CARTES
-======================================== */
-
-.profile-card,
-.mission-card,
-.timeline-card,
-.placeholder-card {
-    width: min(1180px, 100%);
-    margin-right: auto;
-    margin-left: auto;
-
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-large);
-
-    box-shadow:
-        0 20px 50px rgba(0, 0, 0, 0.2),
-        0 0 35px rgba(0, 200, 255, 0.06);
-
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-
-    transition:
-        border-color 0.3s ease,
-        box-shadow 0.3s ease;
-}
-
-.profile-card:hover,
-.mission-card:hover,
-.timeline-card:hover,
-.placeholder-card:hover {
-    border-color: var(--border-hover);
-
-    box-shadow:
-        0 20px 55px rgba(0, 0, 0, 0.25),
-        0 0 40px rgba(0, 200, 255, 0.1);
-}
-
-/* ========================================
-   PROFIL
-======================================== */
-
-.profile-card {
-    margin-bottom: 25px;
-    padding: 36px;
-
-    display: grid;
-    grid-template-columns: 270px minmax(0, 1fr);
-    gap: 42px;
-}
-
-.profile-image {
-    padding-right: 36px;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 18px;
-
-    border-right: 1px solid rgba(0, 200, 255, 0.18);
-}
-
-.avatar-placeholder {
-    width: 160px;
-    height: 160px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    color: var(--cyan-light);
-    font-size: 3rem;
-    font-weight: 700;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(0, 200, 255, 0.12),
-            rgba(0, 200, 255, 0.025)
+        ctx.arc(
+            particle.x,
+            particle.y,
+            Math.max(0.5, glowSize),
+            0,
+            Math.PI * 2
         );
 
-    border: 1px solid rgba(0, 200, 255, 0.55);
-    border-radius: 28px;
+        ctx.fillStyle =
+            `rgba(0, 220, 255, ${Math.min(
+                1,
+                0.85 + reaction * 0.15
+            )})`;
 
-    box-shadow:
-        inset 0 0 35px rgba(0, 200, 255, 0.05),
-        0 0 35px rgba(0, 200, 255, 0.2);
-}
+        ctx.shadowBlur =
+            12 + reaction * 35;
 
-.profile-image > span {
-    color: #9cc8d8;
-    font-size: 0.68rem;
-    letter-spacing: 2px;
-}
+        ctx.shadowColor = "#00f0ff";
 
-.status {
-    display: flex;
-    align-items: center;
-    gap: 9px;
+        ctx.fill();
 
-    color: var(--cyan);
-    font-size: 0.72rem;
-    letter-spacing: 2px;
-}
-
-.status-dot {
-    width: 7px;
-    height: 7px;
-
-    background: var(--cyan-light);
-    border-radius: 50%;
-
-    box-shadow: 0 0 12px var(--cyan-light);
-
-    animation: statusPulse 1.8s infinite ease-in-out;
-}
-
-@keyframes statusPulse {
-    50% {
-        opacity: 0.45;
-    }
-}
-
-.profile-content h3 {
-    margin: 12px 0;
-
-    font-size: clamp(1.9rem, 4vw, 2.5rem);
-}
-
-.profile-description {
-    max-width: 780px;
-
-    color: #b9d3de;
-    line-height: 1.8;
-}
-
-.info-grid {
-    margin-top: 28px;
-
-    display: grid;
-    grid-template-columns: repeat(2, minmax(180px, 1fr));
-    gap: 18px;
-}
-
-.info-box {
-    padding: 19px;
-
-    background: var(--panel-light);
-    border: 1px solid rgba(0, 200, 255, 0.14);
-    border-radius: var(--radius-medium);
-
-    transition:
-        background 0.25s ease,
-        border-color 0.25s ease,
-        transform 0.25s ease;
-}
-
-.info-box:hover {
-    background: rgba(0, 200, 255, 0.055);
-    border-color: rgba(0, 200, 255, 0.32);
-
-    transform: translateY(-3px);
-}
-
-.info-box span {
-    display: block;
-    margin-bottom: 8px;
-
-    color: var(--cyan);
-    font-size: 0.66rem;
-    letter-spacing: 2px;
-}
-
-.info-box strong {
-    color: var(--text);
-    font-size: 0.96rem;
-    font-weight: 500;
-    line-height: 1.5;
+        ctx.shadowBlur = 0;
+    });
 }
 
 /* ========================================
-   MISSION
+   FLUX LUMINEUX
 ======================================== */
 
-.mission-card {
-    margin-bottom: 25px;
-    padding: 30px 36px;
+function resetFlow(flow) {
+    flow.path = buildPath();
+    flow.segment = 0;
+    flow.progress = 0;
+
+    flow.speed =
+        0.012 + Math.random() * 0.006;
+
+    flow.delay =
+        60 + Math.random() * 160;
+
+    flow.tail =
+        0.24 + Math.random() * 0.08;
 }
 
-.mission-card p {
-    max-width: 950px;
-    margin-top: 13px;
+function drawFlowSegment(
+    startParticle,
+    endParticle,
+    startProgress,
+    endProgress
+) {
+    const x1 =
+        startParticle.x +
+        (endParticle.x - startParticle.x) *
+            startProgress;
 
-    color: var(--text-soft);
-    font-size: 1.05rem;
-    line-height: 1.8;
-}
+    const y1 =
+        startParticle.y +
+        (endParticle.y - startParticle.y) *
+            startProgress;
 
-/* ========================================
-   TIMELINE
-======================================== */
+    const x2 =
+        startParticle.x +
+        (endParticle.x - startParticle.x) *
+            endProgress;
 
-.timeline-card {
-    margin-bottom: 25px;
-    padding: 30px 36px 40px;
-}
+    const y2 =
+        startParticle.y +
+        (endParticle.y - startParticle.y) *
+            endProgress;
 
-.timeline-heading {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 20px;
-}
+    const gradient =
+        ctx.createLinearGradient(
+            x1,
+            y1,
+            x2,
+            y2
+        );
 
-.timeline-heading h3 {
-    margin-top: 8px;
-    font-size: 1.5rem;
-}
-
-.timeline-progress {
-    color: #8fb6c5;
-    font-size: 0.68rem;
-    letter-spacing: 2px;
-}
-
-.timeline {
-    position: relative;
-
-    margin-top: 46px;
-
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-}
-
-.timeline::before {
-    content: "";
-
-    position: absolute;
-    top: 39px;
-    right: 8%;
-    left: 8%;
-
-    height: 1px;
-
-    background: linear-gradient(
-        90deg,
-        rgba(0, 200, 255, 0.12),
-        rgba(0, 240, 255, 0.85),
-        rgba(0, 200, 255, 0.12)
+    gradient.addColorStop(
+        0,
+        "rgba(0, 240, 255, 0)"
     );
 
-    box-shadow: 0 0 14px rgba(0, 200, 255, 0.4);
+    gradient.addColorStop(
+        0.45,
+        "rgba(0, 240, 255, 0.45)"
+    );
+
+    gradient.addColorStop(
+        1,
+        "rgba(255, 255, 255, 0.95)"
+    );
+
+    ctx.beginPath();
+
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 3;
+
+    ctx.shadowBlur = 22;
+    ctx.shadowColor = "#00f0ff";
+
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+
+    return {
+        x: x2,
+        y: y2
+    };
 }
 
-.timeline-item {
-    position: relative;
-    z-index: 1;
+function drawFlows() {
+    flows.forEach(flow => {
+        if (flow.delay > 0) {
+            flow.delay--;
+            return;
+        }
 
-    padding: 0 24px;
+        flow.progress += flow.speed;
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+        if (flow.progress >= 1) {
+            const targetNode =
+                flow.path[flow.segment + 1];
 
-    text-align: center;
-}
+            if (targetNode) {
+                targetNode.hit = 1;
+            }
 
-.timeline-year {
-    margin-bottom: 15px;
+            flow.segment++;
+            flow.progress = 0;
 
-    color: var(--cyan);
-    font-size: 0.78rem;
-    letter-spacing: 2px;
-}
+            if (
+                flow.segment >=
+                flow.path.length - 1
+            ) {
+                resetFlow(flow);
+                return;
+            }
+        }
 
-.timeline-node {
-    width: 17px;
-    height: 17px;
-    margin-bottom: 22px;
+        const startParticle =
+            flow.path[flow.segment];
 
-    background: var(--cyan-light);
-    border: 3px solid var(--background);
-    border-radius: 50%;
+        const endParticle =
+            flow.path[flow.segment + 1];
 
-    box-shadow:
-        0 0 0 1px rgba(0, 229, 255, 0.8),
-        0 0 22px rgba(0, 229, 255, 0.9);
-}
+        if (!startParticle || !endParticle) {
+            resetFlow(flow);
+            return;
+        }
 
-.timeline-item p {
-    max-width: 280px;
+        const startProgress = Math.max(
+            0,
+            flow.progress - flow.tail
+        );
 
-    color: #cce4ed;
-    line-height: 1.65;
+        const head = drawFlowSegment(
+            startParticle,
+            endParticle,
+            startProgress,
+            flow.progress
+        );
+
+        ctx.beginPath();
+
+        ctx.arc(
+            head.x,
+            head.y,
+            3.8,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fillStyle = "#ffffff";
+
+        ctx.shadowBlur = 28;
+        ctx.shadowColor = "#00f0ff";
+
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+    });
 }
 
 /* ========================================
-   SECTIONS TEMPORAIRES
+   BOUCLE D’ANIMATION
 ======================================== */
 
-.placeholder-section {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
+function animate(time = 0) {
+    drawBackground();
+    updateParticles();
+    drawLinks(time);
+    drawFlows();
+    drawParticles();
+
+    requestAnimationFrame(animate);
 }
 
-.placeholder-card {
-    min-height: 380px;
-    padding: 50px;
-
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-}
-
-.placeholder-number {
-    margin-bottom: 15px;
-
-    color: rgba(0, 200, 255, 0.28);
-    font-size: 5rem;
-    font-weight: 700;
-    line-height: 1;
-}
-
-.placeholder-card h3 {
-    margin-bottom: 15px;
-    font-size: 1.8rem;
-}
-
-.placeholder-card p {
-    max-width: 720px;
-
-    color: var(--text-muted);
-    line-height: 1.8;
-}
+animate();
 
 /* ========================================
-   APPARITION AU SCROLL
+   APPARITION DES CARTES
 ======================================== */
 
-.reveal {
-    opacity: 0;
-    transform: translateY(25px);
+const revealElements =
+    document.querySelectorAll(".reveal");
 
-    transition:
-        opacity 0.7s ease,
-        transform 0.7s ease;
-}
+const revealObserver =
+    new IntersectionObserver(
+        entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add(
+                        "visible"
+                    );
 
-.reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
+                    revealObserver.unobserve(
+                        entry.target
+                    );
+                }
+            });
+        },
+        {
+            threshold: 0.12
+        }
+    );
+
+revealElements.forEach(element => {
+    revealObserver.observe(element);
+});
 
 /* ========================================
-   TABLETTE ET MOBILE
+   NAVIGATION ET SESSION
 ======================================== */
 
-@media (max-width: 1000px) {
-    .navbar {
-        top: 12px;
-        width: 96%;
-        padding: 14px 18px;
+const sections =
+    document.querySelectorAll("section[id]");
 
-        flex-wrap: wrap;
+const navLinks =
+    document.querySelectorAll(".nav-links a");
 
-        border-radius: 22px;
-    }
+const sessionDisplay =
+    document.querySelector(".session");
 
-    .logo {
-        order: 1;
-    }
+const sessionMap = {
+    home: "SESSION 01 / 05",
+    about: "SESSION 02 / 05",
+    projects: "SESSION 03 / 05",
+    company: "SESSION 04 / 05",
+    watch: "SESSION 05 / 05"
+};
 
-    .session {
-        order: 2;
-    }
+function updateActiveSection(sectionId) {
+    navLinks.forEach(link => {
+        const isCurrentLink =
+            link.getAttribute("href") ===
+            `#${sectionId}`;
 
-    .nav-links {
-        order: 3;
-        width: 100%;
+        link.classList.toggle(
+            "active",
+            isCurrentLink
+        );
+    });
 
-        flex-wrap: wrap;
-        gap: 8px 18px;
-    }
-
-    .nav-links a {
-        padding: 6px 0;
-    }
-
-    .nav-links a::after {
-        bottom: 0;
-    }
-
-    .hero {
-        padding-top: 190px;
-    }
-
-    .page-section {
-        padding-top: 170px;
+    if (
+        sessionDisplay &&
+        sessionMap[sectionId]
+    ) {
+        sessionDisplay.textContent =
+            sessionMap[sectionId];
     }
 }
 
-@media (max-width: 850px) {
-    .section-header {
-        align-items: flex-start;
-        flex-direction: column;
-    }
+const sectionObserver =
+    new IntersectionObserver(
+        entries => {
+            const visibleEntries = entries
+                .filter(entry => entry.isIntersecting)
+                .sort(
+                    (first, second) =>
+                        second.intersectionRatio -
+                        first.intersectionRatio
+                );
 
-    .profile-card {
-        grid-template-columns: 1fr;
-    }
+            if (visibleEntries.length === 0) {
+                return;
+            }
 
-    .profile-image {
-        padding: 0 0 30px;
+            updateActiveSection(
+                visibleEntries[0].target.id
+            );
+        },
+        {
+            rootMargin: "-20% 0px -55% 0px",
+            threshold: [0.1, 0.25, 0.5]
+        }
+    );
 
-        border-right: none;
-        border-bottom: 1px solid rgba(0, 200, 255, 0.18);
-    }
-
-    .info-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .timeline-heading {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .timeline {
-        display: block;
-        margin-top: 35px;
-        padding-left: 28px;
-    }
-
-    .timeline::before {
-        top: 8px;
-        bottom: 8px;
-        left: 7px;
-
-        width: 1px;
-        height: auto;
-    }
-
-    .timeline-item {
-        min-height: 110px;
-        padding: 0 0 30px 28px;
-
-        align-items: flex-start;
-
-        text-align: left;
-    }
-
-    .timeline-year {
-        margin-bottom: 8px;
-    }
-
-    .timeline-node {
-        position: absolute;
-        top: 24px;
-        left: -28px;
-
-        margin: 0;
-    }
-
-    .timeline-item p {
-        max-width: none;
-    }
-}
-
-@media (max-width: 600px) {
-    .navbar {
-        align-items: flex-start;
-    }
-
-    .nav-links {
-        justify-content: flex-start;
-    }
-
-    .nav-links a {
-        font-size: 0.78rem;
-    }
-
-    .session {
-        font-size: 0.62rem;
-    }
-
-    .hero h1 {
-        letter-spacing: -1px;
-    }
-
-    .section-header h2 {
-        font-size: 2.2rem;
-    }
-
-    .profile-card,
-    .mission-card,
-    .timeline-card,
-    .placeholder-card {
-        padding: 25px 20px;
-        border-radius: 18px;
-    }
-
-    .avatar-placeholder {
-        width: 135px;
-        height: 135px;
-    }
-
-    .placeholder-number {
-        font-size: 4rem;
-    }
-}
-
-/* Réduction des animations si demandée par l’utilisateur */
-
-@media (prefers-reduced-motion: reduce) {
-    html {
-        scroll-behavior: auto;
-    }
-
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
+sections.forEach(section => {
+    sectionObserver.observe(section);
+});
