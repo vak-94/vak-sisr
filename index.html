@@ -3,20 +3,36 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio BTS SISR</title>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Portfolio BTS SIO option SISR"
+    >
+
+    <title>Portfolio BTS SIO SISR</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <canvas id="network"></canvas>
+    <!-- Animation réseau -->
+    <canvas id="network" aria-hidden="true"></canvas>
 
+    <!-- Navigation principale -->
     <nav class="navbar">
-        <div class="logo">VK</div>
+
+        <a href="#home" class="logo" aria-label="Retour à l'accueil">
+            VK
+        </a>
 
         <div class="nav-links">
-            <a href="#home">Accueil</a>
+            <a href="#home" class="active">Accueil</a>
             <a href="#about">Qui suis-je ?</a>
             <a href="#projects">Activités & Projets</a>
             <a href="#company">Entreprise</a>
@@ -24,92 +40,256 @@
         </div>
 
         <div class="session">SESSION 01 / 05</div>
+
     </nav>
 
-    <section id="home" class="hero">
-        <h1>Prénom Nom</h1>
-        <h2>Étudiant BTS SIO SISR</h2>
-        <p>Administration Systèmes & Réseaux</p>
-    </section>
+    <main>
 
-    <section id="about" class="page-section about-section">
-        <div class="section-header">
-            <div>
-                <span class="module-label">PROFILE</span>
-                <h2>Qui suis-je ?</h2>
+        <!-- ACCUEIL -->
+        <section id="home" class="hero">
+
+            <!-- À REMPLACER PAR TON VRAI NOM -->
+            <span class="hero-label">INFRASTRUCTURE OVERVIEW</span>
+
+            <h1>Prénom Nom</h1>
+
+            <h2>Étudiant BTS SIO SISR</h2>
+
+            <p>
+                Administration des systèmes, des réseaux
+                et des infrastructures sécurisées
+            </p>
+
+            <a href="#about" class="main-button">
+                Découvrir mon profil
+            </a>
+
+            <div class="scroll-indicator">
+                <span>SCROLL</span>
+                <div class="scroll-line"></div>
             </div>
-            <span class="session-indicator">SESSION 02 / 05</span>
-        </div>
 
-        <div class="profile-card">
-            <div class="profile-image">
-                <div class="avatar-placeholder">VK</div>
-                <span>IDENTITY VERIFIED</span>
+        </section>
+
+        <!-- QUI SUIS-JE -->
+        <section id="about" class="page-section about-section">
+
+            <div class="section-header">
+                <div>
+                    <span class="module-label">PROFILE</span>
+                    <h2>Qui suis-je ?</h2>
+                </div>
+
+                <span class="session-indicator">
+                    SESSION 02 / 05
+                </span>
             </div>
 
-            <div class="profile-content">
-                <p class="status">● ONLINE</p>
-                <h3>Vakassa Karamoko</h3>
+            <div class="profile-card reveal">
 
+                <div class="profile-image">
+
+                    <!-- Tu pourras remplacer VK par une vraie photo -->
+                    <div class="avatar-placeholder">
+                        VK
+                    </div>
+
+                    <span>IDENTITY VERIFIED</span>
+
+                </div>
+
+                <div class="profile-content">
+
+                    <p class="status">
+                        <span class="status-dot"></span>
+                        PROFIL DISPONIBLE
+                    </p>
+
+                    <!-- À REMPLACER PAR TON VRAI NOM -->
+                    <h3>Vakassa Karamoko</h3>
+
+                    <!-- À REMPLACER PAR TA VRAIE PRÉSENTATION -->
+                    <p class="profile-description">
+                        Étudiant en BTS SIO option SISR, je m’intéresse
+                        aux infrastructures informatiques, aux réseaux,
+                        à la virtualisation et à la cybersécurité.
+                        Mon objectif est de développer des solutions
+                        fiables, organisées et sécurisées.
+                    </p>
+
+                    <div class="info-grid">
+
+                        <article class="info-box">
+                            <span>FORMATION</span>
+                            <strong>BTS SIO option SISR</strong>
+                        </article>
+
+                        <article class="info-box">
+                            <span>STATUT</span>
+                            <strong>Étudiant / Alternant</strong>
+                        </article>
+
+                        <article class="info-box">
+                            <span>OBJECTIF</span>
+                            <strong>
+                                Administrateur systèmes et réseaux
+                            </strong>
+                        </article>
+
+                        <article class="info-box">
+                            <span>LOCALISATION</span>
+                            <strong>France</strong>
+                        </article>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="mission-card reveal">
+
+                <span class="module-label">MISSION</span>
+
+                <!-- À REMPLACER PAR TON VRAI OBJECTIF -->
                 <p>
-                    Étudiant en BTS SIO option SISR, passionné par les infrastructures,
-                    les réseaux, la virtualisation et la cybersécurité.
+                    Comprendre, concevoir, administrer et sécuriser
+                    des infrastructures fiables, tout en développant
+                    mes compétences dans les environnements systèmes,
+                    réseaux, cloud et virtualisés.
                 </p>
 
-                <div class="info-grid">
-                    <div>
-                        <span>FORMATION</span>
-                        <strong>BTS SIO SISR</strong>
-                    </div>
-
-                    <div>
-                        <span>STATUT</span>
-                        <strong>Étudiant / Alternant</strong>
-                    </div>
-
-                    <div>
-                        <span>OBJECTIF</span>
-                        <strong>Administrateur systèmes & réseaux</strong>
-                    </div>
-
-                    <div>
-                        <span>LOCALISATION</span>
-                        <strong>France</strong>
-                    </div>
-                </div>
             </div>
-        </div>
 
-        <div class="mission-card">
-            <span class="module-label">MISSION</span>
-            <p>
-                Comprendre, concevoir et sécuriser des infrastructures fiables,
-                tout en développant mes compétences dans les environnements réseau,
-                système et cloud.
-            </p>
-        </div>
+            <div class="timeline-card reveal">
 
-        <div class="timeline-card">
-            <span class="module-label">TIMELINE</span>
+                <div class="timeline-heading">
 
-            <div class="timeline">
-                <div class="timeline-item">
-                    <span>2024</span>
-                    <p>Début du BTS SIO SISR</p>
+                    <div>
+                        <span class="module-label">TIMELINE</span>
+                        <h3>Mon parcours</h3>
+                    </div>
+
+                    <span class="timeline-progress">
+                        03 ÉTAPES
+                    </span>
+
                 </div>
 
-                <div class="timeline-item">
-                    <span>2025</span>
-                    <p>Premiers projets réseau, systèmes et virtualisation</p>
+                <div class="timeline">
+
+                    <!-- À REMPLACER PAR TON VRAI PARCOURS -->
+                    <article class="timeline-item">
+                        <span class="timeline-year">2024</span>
+                        <span class="timeline-node"></span>
+                        <p>
+                            Découverte du BTS SIO et choix
+                            de l’option SISR.
+                        </p>
+                    </article>
+
+                    <article class="timeline-item">
+                        <span class="timeline-year">2025</span>
+                        <span class="timeline-node"></span>
+                        <p>
+                            Réalisation de projets en systèmes,
+                            réseaux et virtualisation.
+                        </p>
+                    </article>
+
+                    <article class="timeline-item">
+                        <span class="timeline-year">2026</span>
+                        <span class="timeline-node"></span>
+                        <p>
+                            Développement du portfolio et préparation
+                            de la poursuite d’études.
+                        </p>
+                    </article>
+
                 </div>
 
-                <div class="timeline-item">
-                    <span>2026</span>
-                    <p>Développement du portfolio et consolidation des compétences</p>
-                </div>
             </div>
-        </div>
-    </section>
+
+        </section>
+
+        <!-- ACTIVITÉS ET PROJETS -->
+        <section id="projects" class="page-section placeholder-section">
+
+            <div class="section-header">
+                <div>
+                    <span class="module-label">PROJECTS</span>
+                    <h2>Activités & Projets</h2>
+                </div>
+
+                <span class="session-indicator">
+                    SESSION 03 / 05
+                </span>
+            </div>
+
+            <div class="placeholder-card reveal">
+                <span class="placeholder-number">03</span>
+                <h3>Module en préparation</h3>
+                <p>
+                    Cette section accueillera tes projets BTS,
+                    tes réalisations personnelles, les technologies
+                    utilisées et les compétences mobilisées.
+                </p>
+            </div>
+
+        </section>
+
+        <!-- ENTREPRISE -->
+        <section id="company" class="page-section placeholder-section">
+
+            <div class="section-header">
+                <div>
+                    <span class="module-label">ORGANIZATION</span>
+                    <h2>Entreprise</h2>
+                </div>
+
+                <span class="session-indicator">
+                    SESSION 04 / 05
+                </span>
+            </div>
+
+            <div class="placeholder-card reveal">
+                <span class="placeholder-number">04</span>
+                <h3>Module en préparation</h3>
+                <p>
+                    Cette section présentera ton entreprise,
+                    son activité, son infrastructure, tes missions
+                    et les outils que tu utilises.
+                </p>
+            </div>
+
+        </section>
+
+        <!-- VEILLE INFORMATIQUE -->
+        <section id="watch" class="page-section placeholder-section">
+
+            <div class="section-header">
+                <div>
+                    <span class="module-label">TECH WATCH</span>
+                    <h2>Veille informatique</h2>
+                </div>
+
+                <span class="session-indicator">
+                    SESSION 05 / 05
+                </span>
+            </div>
+
+            <div class="placeholder-card reveal">
+                <span class="placeholder-number">05</span>
+                <h3>Module en préparation</h3>
+                <p>
+                    Cette section accueillera ton sujet de veille,
+                    ta méthode de recherche, tes sources et ton analyse.
+                </p>
+            </div>
+
+        </section>
+
+    </main>
 
     <script src="script.js"></script>
 
